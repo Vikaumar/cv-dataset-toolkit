@@ -1,84 +1,111 @@
 # CV Dataset Toolkit
 
-A Python + OpenCV pipeline for **automated image data augmentation** and **quality validation** — designed for preparing and quality-checking datasets for AI/Computer Vision model training.
+A Python + OpenCV pipeline for **automated image data augmentation**, **quality validation**, **duplicate detection**, and **dataset statistics** — designed for preparing and quality-checking datasets for AI/Computer Vision model training.
 
 ## Features
 
-### 🔄 Data Augmentation
-- **Geometric transforms**: Rotation, horizontal/vertical flip, random cropping
-- **Color transforms**: Brightness adjustment, contrast adjustment, saturation shift
-- **Noise injection**: Gaussian noise, salt-and-pepper noise
-- **Blur simulation**: Gaussian blur, motion blur
-- **Combined augmentation**: Apply random combinations for diverse training data
+### 🔄 Data Augmentation (16 Transforms)
+- **Geometric**: Rotation (90, 180, 270), horizontal/vertical flip, random cropping, perspective warping, elastic deformation.
+- **Color / Intensity**: Brightness, contrast, CLAHE (local contrast enhancement), hue shift, color channel shuffle.
+- **Noise / Blur**: Gaussian noise, salt-and-pepper noise, Gaussian blur, motion blur, cutout (occlusion rectangles).
+- **Seed-based reproducibility**: Reproducible runs for pipeline consistency.
 
-### ✅ Quality Validation
-- **Blur detection**: Laplacian variance-based sharpness scoring
-- **Brightness analysis**: Mean luminance checks (too dark / too bright)
-- **Resolution check**: Minimum dimension enforcement
-- **Contrast analysis**: Standard deviation-based contrast scoring
-- **Aspect ratio validation**: Flags extreme aspect ratios
-- **Comprehensive report**: JSON/CSV quality reports with pass/fail per image
+### ✅ Quality Validation (8 Checks)
+- **Sharpness**: Laplacian variance scoring to catch out-of-focus/blurry images.
+- **Brightness**: Mean luminance checking to detect under-exposed (dark) and over-exposed (bright) images.
+- **Contrast**: Standard deviation validation of pixel intensities to flag flat/washed-out images.
+- **Resolution**: Minimum dimension enforcement to ensure images meet minimum network input size.
+- **Aspect Ratio**: Width-to-height ratio checking to filter out extreme shapes.
+- **Noise Level**: Median filter delta estimation to catch high-noise inputs.
+- **Saturation**: Mean saturation evaluation to detect grayscale or near-grayscale images.
+- **Corruption**: Structural file decode verification to filter out corrupt/incomplete files.
 
-### 📦 Structured Export
-- Augmented images saved with descriptive filenames
-- JSON metadata logs with augmentation parameters for reproducibility
-- CSV quality reports for dataset-level analysis
-- Configurable output directory structure
+### 👥 Duplicate Detection
+- **Perceptual Hashing**: Fast horizontal dHash computation to pre-screen duplicates.
+- **SSIM Verification**: Structural Similarity Index (Wang et al. 2004) to confirm actual duplicates, eliminating hash-collision false positives for solid/flat colors.
+
+### 📊 Dataset Statistics & Reporting
+- Comprehensive dataset metrics: file sizes, dimensions, formats, color intensities, and quality bucket distributions.
+- Self-contained **HTML Dashboard Report** with interactive summaries, tables, and color-coded status badges.
+
+---
 
 ## Installation
+
+Ensure you have Python 3.8+ installed, then install dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
+---
+
 ## Usage
 
-### Augment Images
+### 1. Run the Full Pipeline (Augment + Validate + Stats + Duplicates + HTML Report)
+Run the entire dataset pipeline with one command:
 ```bash
-# Augment all images in a directory (5 variants per image)
+python main.py pipeline --input ./sample_images --output ./output --count 3 --seed 42
+```
+
+### 2. Augment Images Only
+Apply random augmentations from the 16 available transforms:
+```bash
 python main.py augment --input ./sample_images --output ./output/augmented --count 5
-
-# Augment with specific transforms only
-python main.py augment --input ./sample_images --output ./output/augmented --transforms rotate flip brightness noise
 ```
 
-### Validate Image Quality
+### 3. Quality Validation Only
+Validate all images against threshold configurations:
 ```bash
-# Validate all images in a directory
-python main.py validate --input ./sample_images --output ./output/reports
-
-# Validate with custom thresholds
-python main.py validate --input ./sample_images --min-resolution 640 --blur-threshold 80
+python main.py validate --input ./sample_images --output ./output/reports --blur-threshold 100 --min-resolution 224
 ```
 
-### Full Pipeline (Augment + Validate)
+### 4. Duplicate Finder Only
+Detect and suggest removal candidates for duplicate pairs:
 ```bash
-# Run augmentation then validate the augmented output
-python main.py pipeline --input ./sample_images --output ./output --count 5
+python main.py compare --input ./sample_images --output ./output/reports --ssim-threshold 0.95
 ```
+
+### 5. Compute Statistics Only
+Analyze dataset metrics (resolutions, channels, file size distribution):
+```bash
+python main.py stats --input ./sample_images --output ./output/reports
+```
+
+### 6. Generate HTML Report from Existing Data
+Re-generate the HTML Dashboard from existing JSON report files:
+```bash
+python main.py report --output ./output
+```
+
+---
 
 ## Output Structure
 
 ```
 output/
-├── augmented/
-│   ├── image1_rot90.jpg
-│   ├── image1_flip_h.jpg
-│   ├── image1_bright_1.3.jpg
+├── augmented/          # Generated augmented image variants
+│   ├── image1_rotate_angle90.jpg
+│   ├── image1_cutout_num_rects2.jpg
 │   └── ...
-├── reports/
-│   ├── quality_report.json
-│   └── quality_report.csv
-└── metadata/
-    └── augmentation_log.json
+├── metadata/           # Augmentation log entries for reproducibility
+│   └── augmentation_log.json
+└── reports/            # Quality, duplicate, and statistics reports
+    ├── quality_report.json
+    ├── quality_report.csv
+    ├── duplicate_report.json
+    ├── dataset_stats.json
+    └── report.html     # Interactive HTML Dashboard
 ```
 
-## Tech Stack
+---
+
+## Technical Stack
 
 - **Python 3.8+**
-- **OpenCV** — Image processing and computer vision operations
-- **NumPy** — Numerical operations for pixel manipulation
-- **Standard library** — argparse, json, csv, pathlib
+- **OpenCV** — Custom image processing, resizing, filtering, and colorspace transformations.
+- **NumPy** — Matrix/tensor computations for noise injection, pixel operations, and histograms.
+- **SciPy** — Elastic deformation and smoothing filters.
 
 ## Author
 
