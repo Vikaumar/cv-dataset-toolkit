@@ -2,7 +2,7 @@
 
 A Python + OpenCV pipeline for **automated image data augmentation**, **quality validation**, **duplicate detection**, and **dataset statistics** — designed for preparing and quality-checking datasets for AI/Computer Vision model training.
 
-![Dashboard Preview](dashboard_preview.png)
+![Dashboard Preview](dashboard_actual.png)
 
 ## Features
 
