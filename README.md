@@ -102,6 +102,18 @@ output/
 
 ---
 
+## Running Tests
+
+The toolkit includes a comprehensive suite of 60 unit tests covering all augmentations, validation rules, and duplication checks.
+
+Install test dependencies and run tests:
+```bash
+pip install pytest
+python -m pytest tests/ -v
+```
+
+---
+
 ## Technical Stack
 
 - **Python 3.8+**
